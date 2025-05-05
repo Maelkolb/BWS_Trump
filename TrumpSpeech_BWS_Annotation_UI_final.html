@@ -18,7 +18,23 @@
       margin: 10px 0 20px;
     }
     #initialScreen {
-      text-align: center;
+  max-width: 600px;       /* optional: constrain overall width */
+  margin: 0 auto;         /* center on page */
+  text-align: center;     /* center contents */
+  font-family: sans-serif;
+}
+
+#initialScreen .description-box {
+  background: #f9f9f9;                        /* light grey background */
+  border: 1px solid #ddd;                     /* subtle border */
+  border-radius: 8px;                         /* rounded corners */
+  padding: 16px 24px;                         /* inner spacing */
+  margin-bottom: 1.5em;                       /* space before button */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);       /* soft drop shadow */
+  text-align: left;                           /* left-align text */
+  line-height: 1.5;                           /* improve readability */
+}
+
     }
     #initialScreen img {
       max-width: 100%;
@@ -112,13 +128,23 @@
   <h1>Best-Worst-Scaling Valence Annotation</h1>
 
   <div id="initialScreen">
-    <img src="Trump_inaug_cnn.JPG" alt="Inauguration Speech">
-    <p class="description">
-      <strong>Task Description:</strong><br>
-      You will see sets of four words extracted from a the Inaugural Address of President Trump. Your Task is to judge the sentiment of the words and annotate the two terms conveying the most postive (best)and most negative (worst) sentiment. 
-    </p>
-    <button onclick="startTask()">Start Annotation</button>
+  <img
+    src="https://raw.githubusercontent.com/Maelkolb/BWS_Trump/main/Img_trump.jpg"
+    alt="Inauguration Speech"
+    style="max-width: 600px; width: 100%; height: auto; display: block; margin-bottom: 1em;"
+  >
+
+  <div class="description-box">
+    <strong>Task Description:</strong><br>
+    You will see sets of four words extracted from the Inaugural Address of President Trump.
+    Your task is to judge the sentiment of the words and annotate the two terms conveying the
+    most positive (best) and most negative (worst) sentiment.
   </div>
+
+  <button onclick="startTask()">Start Annotation</button>
+</div>
+
+
 
   <p id="setDescription" class="set-description" style="display:none;">
     Choose the term you find <strong>most positive</strong> (Best) and <strong>most negative</strong> (Worst).
