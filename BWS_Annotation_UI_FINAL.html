@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Best‑Worst‑Scaling Valence Annotation</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: #f0f4f8
+      }
+
+      h1 {
+        text-align: center
+      }
+
+      p.description,
+      .set-description {
+        text-align: center;
+        font-size: 18px;
+        margin: 10px 0 20px
+      }
+
+      #initialScreen {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center
+      }
+
+      .choice-container {
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+        flex-wrap: wrap
+      }
+
+      .choice {
+        max-width: 360px;
+        width: 100%
+      }
+
+      .choice img {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, .1)
+      }
+
+      .choice button {
+        margin-top: 10px;
+        padding: 12px 24px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background: #0077c8;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .2)
+      }
+
+      .description-box {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px 24px;
+        margin-top: 32px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, .1);
+        text-align: left;
+        line-height: 1.5
+      }
+
+      #initialScreen img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin-bottom: 20px
+      }
+
+      .comparison {
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .1)
+      }
+
+      .texts {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px
+      }
+
+      .text {
+        flex: 1 1 22%;
+        padding: 15px;
+        border: 1px solid #ddd;
+        background: #f9f9f9;
+        border-radius: 5px;
+        font-size: 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-width: 140px
+      }
+
+      .text p {
+        margin-bottom: 10px;
+        flex-grow: 1;
+        text-align: center
+      }
+
+      .button-container {
+        text-align: center;
+        margin-top: 20px
+      }
+
+      button {
+        margin: 5px;
+        padding: 12px 24px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .2)
+      }
+
+      .bestButton,
+      .worstButton {
+        width: 100%;
+        background: #fff;
+        color: #000;
+        border: 2px solid #ccc
+      }
+
+      .bestButton.selected {
+        background: #28a745;
+        color: #fff;
+        border-color: #28a745
+      }
+
+      .worstButton.selected {
+        background: #dc3545;
+        color: #fff;
+        border-color: #dc3545
+      }
+
+      #summaryScreen {
+        text-align: center;
+        margin-top: 30px
+      }
+
+      #chartsContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        justify-content: center;
+        margin-top: 24px
+      }
+
+      #chartsContainer canvas {
+        flex: none;
+        max-width: 600px;
+        width: 600px;
+        height: 400px !important
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 40px;
+        font-size: 14px;
+        color: #666
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <h1>Best‑Worst‑Scaling Valence Annotation</h1>
+    <div id="initialScreen">
+      <div class="choice-container">
+        <div class="choice">
+          <img src="https://raw.githubusercontent.com/Maelkolb/BWS_Trump/main/trump_img_chatgpt.png" alt="Trump Inauguration" onclick="chooseDataset('trump')">
+          <button onclick="chooseDataset('trump')">Annotate Trump Speech</button>
+        </div>
+        <div class="choice">
+          <img src="https://raw.githubusercontent.com/Maelkolb/BWS_Trump/main/obama_img_chatgpt2.png" alt="Obama Inauguration" onclick="chooseDataset('obama')">
+          <button onclick="chooseDataset('obama')">Annotate Obama Speech</button>
+        </div>
+      </div>
+      <div class="description-box">
+        <strong>Task Description:</strong>
+        <br> You will see sets of four words extracted from an inaugural address. Choose the term you find <strong>most positive</strong> (Best) and <strong>most negative</strong> (Worst) in each set.
+      </div>
+    </div>
+    <p id="setDescription" class="set-description" style="display:none;"> Choose the term you find <strong>most positive</strong> (Best) and <strong>most negative</strong> (Worst). </p>
+    <div id="setContainer" style="display:none;"></div>
+    <div class="button-container" id="mainButtons" style="display:none;">
+      <button id="nextButton" onclick="nextSet()">Next</button>
+      <button id="downloadButton" onclick="downloadAnnotations()" style="display:none;">Download Results</button>
+    </div>
+    <div id="summaryScreen" style="display:none;">
+      <h2>Annotation Summary</h2>
+      <p id="stats"></p>
+      <div id="chartsContainer"></div>
+	  <div id="speechContainer"
+     style="max-width:800px;margin:32px auto;text-align:left;line-height:1.6;"></div>
+		<canvas id="shiftChart"
+        style="max-width:800px;width:100%;height:400px;"></canvas>
+    </div>
+    <script>
+      const datasets = {
+        trump: {
+          initialScores: {
+            "thank you": 0.766,
+            "wow": 0.634,
+            "golden age": 0.534,
+            "flourish": 0.878,
+            "respect": 0.927,
+            "world": 0.244,
+            "envy": -0.52,
+            "advantage": 0.834,
+            "first": 0.25,
+            "thrilling": 0.893,
+            "sovereignty": 0.438,
+            "reclaim": -0.062,
+            "safety": 0.416,
+            "restore": 0.53,
+            "justice": 0.52,
+            "rebalance": 0.619,
+            "vicious": -0.584,
+            "violent": -0.776,
+            "weaponization": -0.732,
+            "government": -0.146,
+            "priority": 0.756,
+            "proud": 0.812,
+            "prosperous": 0.896,
+            "free": 0.792,
+            "great": 0.916
+          },
+          data: [
+            ["free", "envy", "justice", "golden age"],
+            ["safety", "rebalance", "restore", "weaponization"],
+            ["priority", "restore", "vicious", "prosperous"],
+            ["flourish", "justice", "first", "prosperous"],
+            ["world", "free", "safety", "wow"],
+            ["great", "envy", "wow", "sovereignty"],
+            ["world", "proud", "respect", "thrilling"],
+            ["world", "proud", "thank you", "reclaim"],
+            ["justice", "weaponization", "thank you", "prosperous"],
+            ["world", "flourish", "violent", "respect"],
+            ["great", "flourish", "reclaim", "thrilling"],
+            ["government", "first", "reclaim", "thrilling"],
+            ["free", "government", "reclaim", "thrilling"],
+            ["world", "advantage", "government", "sovereignty"],
+            ["great", "wow", "prosperous", "thrilling"],
+            ["justice", "proud", "golden age", "vicious"],
+            ["advantage", "safety", "golden age", "thank you"],
+            ["envy", "restore", "violent", "thank you"],
+            ["flourish", "weaponization", "government", "vicious"],
+            ["advantage", "safety", "justice", "government"],
+            ["advantage", "priority", "justice", "proud"],
+            ["restore", "government", "respect", "thank you"],
+            ["free", "rebalance", "restore", "wow"],
+            ["great", "safety", "restore", "wow"],
+            ["free", "wow", "sovereignty", "violent"],
+            ["proud", "respect", "vicious", "prosperous"],
+            ["free", "safety", "flourish", "golden age"],
+            ["proud", "first", "prosperous", "thrilling"],
+            ["advantage", "free", "priority", "safety"],
+            ["justice", "sovereignty", "first", "prosperous"],
+            ["advantage", "restore", "government", "sovereignty"],
+            ["advantage", "great", "proud", "reclaim"],
+            ["world", "priority", "rebalance", "golden age"],
+            ["sovereignty", "violent", "respect", "reclaim"],
+            ["wow", "weaponization", "government", "vicious"],
+            ["priority", "restore", "violent", "respect"],
+            ["envy", "golden age", "weaponization", "violent"],
+            ["envy", "proud", "thank you", "thrilling"],
+            ["weaponization", "violent", "thank you", "vicious"],
+            ["great", "free", "flourish", "weaponization"],
+            ["world", "rebalance", "reclaim", "thrilling"],
+            ["great", "priority", "rebalance", "golden age"],
+            ["world", "advantage", "envy", "sovereignty"],
+            ["priority", "weaponization", "first", "reclaim"],
+            ["respect", "first", "vicious", "prosperous"],
+            ["great", "safety", "flourish", "golden age"],
+            ["rebalance", "flourish", "thank you", "vicious"],
+            ["priority", "envy", "violent", "first"],
+            ["rebalance", "sovereignty", "respect", "first"],
+            ["rebalance", "envy", "wow", "justice"]
+          ]
+        },
+        obama: {
+          initialScores: {
+            "humble": 0.734,
+				"grateful": 0.916,
+				"trust": 0.776,
+				"bestow": 0.312,
+				"mindful": 0.530,
+				"sacrifice": -0.584,
+				"service": 0.368,
+				"generosity": 0.916,
+				"cooperation": 0.694,
+				"oath": 0.086,
+				"prosperity": 0.834,
+				"peace": 0.939,
+				"cloud": 0.480,
+				"storm": -0.624,
+				"skill": 0.694,
+				"vision": 0.416,
+				"ideals": 1.000,
+				"crisis": -0.584,
+				"understand": 0.520,
+				"war": -0.956,
+				"violence": -0.878,
+				"hatred": -0.926,
+				"weak": -0.640,
+				"greed": -0.654,
+				"irresponsibility": -1.000
+          },
+          data: [['weak', 'peace', 'humble', 'irresponsibility'],
+    ['ideals', 'trust', 'hatred', 'vision'],
+    ['service', 'storm', 'trust', 'hatred'],
+    ['ideals', 'weak', 'greed', 'service'],
+    ['crisis', 'peace', 'humble', 'hatred'],
+    ['ideals', 'service', 'oath', 'hatred'],
+    ['bestow', 'war', 'oath', 'vision'],
+    ['cooperation', 'skill', 'violence', 'sacrifice'],
+    ['weak', 'grateful', 'generosity', 'crisis'],
+    ['grateful', 'prosperity', 'irresponsibility', 'sacrifice'],
+    ['trust', 'peace', 'oath', 'prosperity'],
+    ['ideals', 'storm', 'humble', 'prosperity'],
+    ['ideals', 'cloud', 'mindful', 'generosity'],
+    ['greed', 'service', 'grateful', 'trust'],
+    ['weak', 'skill', 'prosperity', 'irresponsibility'],
+    ['crisis', 'oath', 'violence', 'sacrifice'],
+    ['bestow', 'weak', 'prosperity', 'sacrifice'],
+    ['ideals', 'cloud', 'greed', 'storm'],
+    ['service', 'skill', 'storm', 'war'],
+    ['bestow', 'understand', 'generosity', 'hatred'],
+    ['bestow', 'weak', 'grateful', 'generosity'],
+    ['understand', 'humble', 'irresponsibility', 'sacrifice'],
+    ['weak', 'understand', 'greed', 'irresponsibility'],
+    ['ideals', 'mindful', 'crisis', 'peace'],
+    ['peace', 'vision', 'irresponsibility', 'violence'],
+    ['cloud', 'understand', 'war', 'vision'],
+    ['understand', 'skill', 'generosity', 'prosperity'],
+    ['bestow', 'cooperation', 'oath', 'hatred'],
+    ['understand', 'mindful', 'humble', 'war'],
+    ['bestow', 'greed', 'cooperation', 'peace'],
+    ['cloud', 'greed', 'mindful', 'cooperation'],
+    ['grateful', 'prosperity', 'violence', 'sacrifice'],
+    ['bestow', 'cloud', 'grateful', 'peace'],
+    ['grateful', 'vision', 'violence', 'sacrifice'],
+    ['greed', 'mindful', 'crisis', 'sacrifice'],
+    ['generosity', 'war', 'vision', 'violence'],
+    ['cooperation', 'skill', 'trust', 'war'],
+    ['understand', 'mindful', 'service', 'cooperation'],
+    ['trust', 'vision', 'irresponsibility', 'violence'],
+    ['bestow', 'cloud', 'understand', 'oath'],
+    ['cloud', 'service', 'generosity', 'violence'],
+    ['ideals', 'greed', 'storm', 'irresponsibility'],
+    ['storm', 'war', 'oath', 'hatred'],
+    ['cooperation', 'grateful', 'trust', 'humble'],
+    ['skill', 'generosity', 'oath', 'hatred'],
+    ['mindful', 'skill', 'storm', 'trust'],
+    ['mindful', 'service', 'skill', 'crisis'],
+    ['cloud', 'weak', 'crisis', 'humble'],
+    ['storm', 'peace', 'humble', 'vision'],
+    ['cooperation', 'crisis', 'war', 'prosperity'],]
+        }
+      };
+      let initialScores = {};
+      let data = [];
+      let sets = [];
+      let selectedSets = [];
+      let currentSetIndex = 0;
+const speechURLs = {trump: 'https://raw.githubusercontent.com/Maelkolb/BWS_Trump/main/Trump_Speech_text.txt', obama: 'https://raw.githubusercontent.com/Maelkolb/BWS_Trump/main/Obama_Speech_Text.txt'}; let currentDatasetKey = null; 
+      function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function pearson(x, y) {
+        const n = x.length;
+        let sx = 0,
+          sy = 0,
+          sxy = 0,
+          sx2 = 0,
+          sy2 = 0;
+        for (let i = 0; i < n; i++) {
+          sx += x[i];
+          sy += y[i];
+          sxy += x[i] * y[i];
+          sx2 += x[i] * x[i];
+          sy2 += y[i] * y[i];
+        }
+        return (n * sxy - sx * sy) / Math.sqrt((n * sx2 - sx * sx) * (n * sy2 - sy * sy));
+      }
+
+      function rankArray(arr) {
+        const sorted = [...arr].sort((a, b) => a - b);
+        return arr.map(v => sorted.indexOf(v) + 1);
+      }
+
+      function chooseDataset(key) {
+		currentDatasetKey = key;
+        initialScores = datasets[key].initialScores;
+        data = datasets[key].data;
+        sets = data.map((texts, i) => ({
+          idx: i + 1,
+          texts
+        }));
+        selectedSets = shuffle([...sets]).slice(0, Math.min(50, sets.length));
+        document.getElementById("initialScreen").style.display = "none";
+        document.getElementById("setDescription").style.display = "block";
+        document.getElementById("setContainer").style.display = "block";
+        document.getElementById("mainButtons").style.display = "block";
+        currentSetIndex = 0;
+        displayCurrentSet();
+      }
+
+      function displayCurrentSet() {
+        const container = document.getElementById("setContainer");
+        container.innerHTML = "";
+        const s = selectedSets[currentSetIndex];
+        const comp = document.createElement("div");
+        comp.className = "comparison";
+        comp.innerHTML = `
+								<h3>Comparison ${currentSetIndex+1} of ${selectedSets.length}</h3>`;
+        const textsDiv = document.createElement("div");
+        textsDiv.className = "texts";
+        s.texts.forEach((txt, i) => {
+          const col = document.createElement("div");
+          col.className = "text";
+          col.innerHTML = `
+								<p>${txt}</p>
+								<button id="best_${i}" class="bestButton">Best</button>
+								<button id="worst_${i}" class="worstButton">Worst</button>`;
+          col.querySelector(`#best_${i}`).onclick = () => selectBest(i);
+          col.querySelector(`#worst_${i}`).onclick = () => selectWorst(i);
+          textsDiv.appendChild(col);
+        });
+        comp.appendChild(textsDiv);
+        container.appendChild(comp);
+        updateButtons();
+      }
+
+      function selectBest(i) {
+        const s = selectedSets[currentSetIndex];
+        if (s.worst === i) return;
+        s.best = i;
+        updateButtons();
+      }
+
+      function selectWorst(i) {
+        const s = selectedSets[currentSetIndex];
+        if (s.best === i) return;
+        s.worst = i;
+        updateButtons();
+      }
+
+      function updateButtons() {
+        const s = selectedSets[currentSetIndex];
+        for (let i = 0; i < 4; i++) {
+          const b = document.getElementById(`best_${i}`);
+          const w = document.getElementById(`worst_${i}`);
+          b.classList.remove("selected");
+          w.classList.remove("selected");
+          b.disabled = false;
+          w.disabled = false;
+          if (s.best === i) {
+            b.classList.add("selected");
+            w.disabled = true;
+          }
+          if (s.worst === i) {
+            w.classList.add("selected");
+            b.disabled = true;
+          }
+        }
+      }
+
+      function nextSet() {
+        const s = selectedSets[currentSetIndex];
+        if (s.best == null || s.worst == null) return;
+        currentSetIndex++;
+        if (currentSetIndex < selectedSets.length) {
+          displayCurrentSet();
+        } else {
+          document.getElementById("nextButton").style.display = "none";
+          document.getElementById("setContainer").style.display = "none";
+          document.getElementById("downloadButton").style.display = "inline-block";
+          showStats();
+        }
+      }
+
+      function showStats() {
+        const counts = {},
+          calculatedScores = {};
+        selectedSets.forEach(s => {
+          s.texts.forEach(t => {
+            counts[t] = counts[t] || {
+              best: 0,
+              worst: 0,
+              total: 0
+            };
+            counts[t].total++;
+          });
+          counts[s.texts[s.best]].best++;
+          counts[s.texts[s.worst]].worst++;
+        });
+        Object.keys(counts).forEach(t => {
+          calculatedScores[t] = (counts[t].best - counts[t].worst) / counts[t].total;
+        });
+        const terms = Object.keys(calculatedScores);
+        const calcArr = terms.map(t => calculatedScores[t]);
+        const initArr = terms.map(t => initialScores[t]);
+        const rho = pearson(rankArray(calcArr), rankArray(initArr));
+        document.getElementById("stats").innerHTML = `
+										<strong>Spearman correlation:</strong> ${rho.toFixed(3)}`;
+        const correctBest = [],
+          correctWorst = [];
+        selectedSets.forEach(s => {
+          const scores = s.texts.map(t => initialScores[t]);
+          const maxScore = Math.max(...scores),
+            minScore = Math.min(...scores);
+          correctBest.push(scores[s.best] === maxScore ? 1 : 0);
+          correctWorst.push(scores[s.worst] === minScore ? 1 : 0);
+        });
+        document.getElementById("summaryScreen").style.display = "block";
+        const container = document.getElementById("chartsContainer");
+        container.innerHTML = '';
+		loadAndDisplaySpeech(calculatedScores);
+        const cb = document.createElement("canvas");
+        container.appendChild(cb);
+        new Chart(cb.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: selectedSets.map((_, i) => `Set ${i+1}`),
+            datasets: [{
+              label: "Best Correctness",
+              data: correctBest,
+              backgroundColor: correctBest.map(c => c ? "#4caf50" : "#e0e0e0")
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Best Choices vs Ground Truth",
+                font: {
+                  size: 16
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ctx.raw ? "Correct" : "Incorrect"
+                }
+              },
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 1,
+                ticks: {
+                  stepSize: 1,
+                  callback: v => v ? "Correct" : "Incorrect"
+                }
+              },
+              x: {
+                ticks: {
+                  autoSkip: false,
+                  maxRotation: 90,
+                  minRotation: 90
+                }
+              }
+            }
+          }
+        });
+        const cw = document.createElement("canvas");
+        container.appendChild(cw);
+        new Chart(cw.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: selectedSets.map((_, i) => `Set ${i+1}`),
+            datasets: [{
+              label: "Worst Correctness",
+              data: correctWorst,
+              backgroundColor: correctWorst.map(c => c ? "#dc3545" : "#e0e0e0")
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Worst Choices vs Ground Truth",
+                font: {
+                  size: 16
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ctx.raw ? "Correct" : "Incorrect"
+                }
+              },
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 1,
+                ticks: {
+                  stepSize: 1,
+                  callback: v => v ? "Correct" : "Incorrect"
+                }
+              },
+              x: {
+                ticks: {
+                  autoSkip: false,
+                  maxRotation: 90,
+                  minRotation: 90
+                }
+              }
+            }
+          }
+        });
+      }
+	async function loadAndDisplaySpeech(scoresObj) {
+  const container = document.getElementById('speechContainer');
+  container.textContent = 'Loading speech…';
+
+  // 1) fetch and clean speech text
+  const txt = await fetch(speechURLs[currentDatasetKey]).then(r => r.text());
+  const cleaned = txt.split('\n').filter(l => l.trim()).join(' ');
+
+  // 2) colour‑highlight lexicon terms in the text
+  let highlighted = cleaned;
+  Object.entries(scoresObj).forEach(([term, score]) => {
+    const color = score > 0.4 ? '#c8e6c9' : score < -0.4 ? '#ffcdd2' : '#fff9c4';
+    const safe = term
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')   // escape regex meta
+      .replace(/\s+/g, '\\s+');                // allow flex spacing
+    const re = new RegExp('\\b' + safe + '\\b', 'gi');
+    highlighted = highlighted.replace(
+      re,
+      m => `<span style="background-color:${color};">${m}</span>`
+    );
+  });
+  container.innerHTML = highlighted;
+
+  // 3) build sentiment‑shift dataset
+  const tokens = cleaned.split(/\s+/);
+  const pts = [];
+  tokens.forEach((w, i) => {
+    const key = w.replace(/[^\w]/g, '').toLowerCase();
+    if (scoresObj[key] != null) pts.push({ x: i, y: scoresObj[key] });
+  });
+
+  // 4) draw scatter/line chart
+  const ctx = document.getElementById('shiftChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'BWS score',
+        data: pts,
+        showLine: true,
+        fill: false
+      }]
+    },
+    options: {
+      scales: {
+        x: { title: { display: true, text: 'Word position' } },
+        y: { min: -1, max: 1, title: { display: true, text: 'BWS score' } }
+      },
+      plugins: {
+        title: { display: true, text: 'Sentiment shift over speech' }
+      }
+    }
+  });
+}
+      function downloadAnnotations() {
+        const anns = selectedSets.map(s => ({
+          set: s.idx,
+          Best: s.best,
+          Worst: s.worst
+        }));
+        const jBlob = new Blob([JSON.stringify(anns, null, 2)], {
+          type: "application/json"
+        });
+        const jURL = URL.createObjectURL(jBlob);
+        const aj = document.createElement("a");
+        aj.href = jURL;
+        aj.download = "annotations.json";
+        aj.click();
+        URL.revokeObjectURL(jURL);
+        let csv = '"text";best_count;worst_count;middle_count;total_count;score\n';
+        const cnt = {};
+        selectedSets.forEach(s => {
+          s.texts.forEach((t, i) => {
+            if (!cnt[t]) cnt[t] = {
+              best: 0,
+              worst: 0,
+              middle: 0,
+              total: 0
+            };
+            cnt[t].total++;
+            if (i === s.best) cnt[t].best++;
+            else if (i === s.worst) cnt[t].worst++;
+            else cnt[t].middle++;
+          });
+        });
+        Object.keys(cnt).forEach(t => {
+          const c = cnt[t];
+          const sc = ((c.best + c.worst) / c.total).toFixed(4);
+          csv += `"${t.replace(/"/g,'""')}";${c.best};${c.worst};${c.middle};${c.total};${sc}\n`;
+        });
+        const cBlob = new Blob([csv], {
+          type: "text/csv"
+        });
+        const cURL = URL.createObjectURL(cBlob);
+        const ac = document.createElement("a");
+        ac.href = cURL;
+        ac.download = "scores.csv";
+        ac.click();
+        URL.revokeObjectURL(cURL);
+      }
+    </script>
+    <div class="footer">2025‑AnnotationGUI</div>
+  </body>
+</html>
