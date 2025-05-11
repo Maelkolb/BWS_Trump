@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+	<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
     <meta charset="utf-8">
     <title>Best‑Worst‑Scaling Valence Annotation</title>
     <style>
@@ -166,6 +168,11 @@
         width: 600px;
         height: 400px !important
       }
+	  .sets-table{width:100%;border-collapse:collapse;margin-top:32px}
+		.sets-table th,.sets-table td{border:1px solid #ccc;padding:8px;text-align:center}
+	.bestCell{background:#c8e6c9}
+	.worstCell{background:#ffcdd2}
+
 
       .footer {
         text-align: center;
@@ -204,6 +211,7 @@
       <h2>Annotation Summary</h2>
       <p id="stats"></p>
       <div id="chartsContainer"></div>
+	  <div id="setsTableContainer"></div>
 	  <div id="speechContainer"
      style="max-width:800px;margin:32px auto;text-align:left;line-height:1.6;"></div>
 		<canvas id="shiftChart"
@@ -636,6 +644,7 @@ const speechURLs = {trump: 'https://raw.githubusercontent.com/Maelkolb/BWS_Trump
             }
           }
         });
+		buildSetsTable();
       }
 	async function loadAndDisplaySpeech(scoresObj) {
   const container = document.getElementById('speechContainer');
@@ -690,6 +699,23 @@ const speechURLs = {trump: 'https://raw.githubusercontent.com/Maelkolb/BWS_Trump
       }
     }
   });
+}
+	function buildSetsTable(){
+  const container=document.getElementById('setsTableContainer');
+  container.innerHTML='';
+  const tbl=document.createElement('table');
+  tbl.className='sets-table';
+  tbl.innerHTML='<thead><tr><th>Set&nbsp;#</th><th>Term&nbsp;1</th><th>Term&nbsp;2</th><th>Term&nbsp;3</th><th>Term&nbsp;4</th></tr></thead>';
+  const tbody=document.createElement('tbody');
+  selectedSets.forEach((s,i)=>{
+    const row=document.createElement('tr');
+    row.innerHTML='<td>'+ (i+1) +'</td>'+ s.texts.map((t,idx)=>
+      '<td class="'+ (idx===s.best?'bestCell':idx===s.worst?'worstCell':'') +'">'+ t +'</td>'
+    ).join('');
+    tbody.appendChild(row);
+  });
+  tbl.appendChild(tbody);
+  container.appendChild(tbl);
 }
       function downloadAnnotations() {
         const anns = selectedSets.map(s => ({
